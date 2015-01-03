@@ -1,25 +1,25 @@
 var language_parser = require('./language_parser');
 var lookupSymbol = require('./symbol_locator').lookupSymbol;
 
-function Node() {
+exports.Node = function() {
   this.childNodes = [];
-}
+};
 
-function ClassNode() {
-  Node.call(this);
-}
+exports.ClassNode = function() {
+  exports.Node.call(this);
+};
 
-function PropNode() {
-  Node.call(this);
+exports.PropNode = function() {
+  exports.Node.call(this);
   this.default = [];
-}
+};
 
-function EnumNode() {
-  Node.call(this);
-}
+exports.EnumNode = function() {
+  exports.Node.call(this);
+};
 
 exports.analyze = function(tokens) {
-  var root = new Node();
+  var root = new exports.Node();
   
   while (tokens.length > 0) {
     var cur = tokens.shift();
@@ -32,7 +32,10 @@ exports.analyze = function(tokens) {
         
         if (cur.value == 'import') {
           var parentTokens = language_parser.tokenizeString(require('fs')
-                .readFileSync('SteamLanguage/' + text.value, { encoding: 'ascii' }));
+                .readFileSync(
+                  __dirname + '/../SteamLanguage/' + text.value,
+                  { encoding: 'ascii' }
+                ));
           
           var newRoot = exports.analyze(parentTokens);
           
@@ -60,7 +63,7 @@ exports.analyze = function(tokens) {
                 parent = expect(tokens, 'identifier');
               }
               
-              var cnode = new ClassNode();
+              var cnode = new exports.ClassNode();
               cnode.name = name.value;
               
               if (ident != null) {
@@ -88,7 +91,7 @@ exports.analyze = function(tokens) {
               
               var flag = optional(tokens, 'identifier', 'flags');
               
-              var enode = new EnumNode();
+              var enode = new exports.EnumNode();
               enode.name = name.value;
               
               if (flag) {
@@ -117,7 +120,7 @@ function parseInnerScope(tokens, parent, root) {
   var scope2 = optional(tokens, 'operator', '}');
   
   while (!scope2) {
-    var pnode = new PropNode();
+    var pnode = new exports.PropNode();
     
     var t1 = tokens.shift();
     
@@ -147,9 +150,6 @@ function parseInnerScope(tokens, parent, root) {
     
     var defop = optional(tokens, 'operator', '=');
     
-    if (pnode.name == 'ShellSearchLogs') {
-      console.log();
-    }
     if (defop) {
       while (true) {
         var value = tokens.shift();
@@ -181,14 +181,14 @@ function parseInnerScope(tokens, parent, root) {
   }
 }
 
-function expect(tokens, name) {
+function expect(tokens, name, value) {
   var peek = tokens[0];
   
   if (!peek) {
     return language_parser.Token('EOF', '');
   }
   
-  if (peek.name != name) {
+  if (peek.name != name || value && peek.value != value) {
     throw new Error("Expecting " + name);
   }
   
@@ -202,7 +202,7 @@ function optional(tokens, name, value) {
     return new language_parser.Token('EOF', '');
   }
   
-  if (peek.name != name || peek.value != value) {
+  if (peek.name != name || value && peek.value != value) {
     return null;
   }
   

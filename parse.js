@@ -1,9 +1,10 @@
-var string = require('fs').readFileSync('SteamLanguage/steammsg.steamd', { encoding: 'ascii' });
+var token_analyzer = require(__dirname + '/parser/token_analyzer');
 
-// console.log(tokenList);
-console.log(process.version)
+var string = require('fs').readFileSync(__dirname + '/SteamLanguage/steammsg.steamd', { encoding: 'ascii' });
+
 var tokenList = require(__dirname + '/parser/language_parser').tokenizeString(string);
 
-var root = require(__dirname + '/parser/token_analyzer').analyze(tokenList);
+var root = token_analyzer.analyze(tokenList);
 
-var rootEnumNode = new Node();
+var rootEnumNode = new token_analyzer.Node();
+
