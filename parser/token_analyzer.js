@@ -31,11 +31,7 @@ exports.analyze = function(tokens) {
         var text = expect(tokens, 'string');
         
         if (cur.value == 'import') {
-          var parentTokens = language_parser.tokenizeString(require('fs')
-                .readFileSync(
-                  __dirname + '/../SteamLanguage/' + text.value,
-                  { encoding: 'ascii' }
-                ));
+          var parentTokens = language_parser.tokenizeString(require('fs').readFileSync(text.value, { encoding: 'ascii' }));
           
           var newRoot = exports.analyze(parentTokens);
           

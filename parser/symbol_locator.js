@@ -1,11 +1,11 @@
-function StrongSymbol(classNode, prop) {
+exports.StrongSymbol = function(classNode, prop) {
   this.class = classNode;
   this.prop = prop;
-}
+};
 
-function WeakSymbol(ident) {
+exports.WeakSymbol = function(ident) {
   this.identifier = ident;
-}
+};
 
 var identifierPattern = '([a-zA-Z0-9_:]*)';
 var fullIdentPattern = '([a-zA-Z0-9_]*?)::([a-zA-Z0-9_]*)';
@@ -33,10 +33,10 @@ exports.lookupSymbol = function(tree, identifier, strongonly) {
       if (strongonly) {
         throw new Error("Invalid weak symbol " + identifier);
       } else {
-        return new WeakSymbol(identifier);
+        return new exports.WeakSymbol(identifier);
       }
     } else {
-      return new StrongSymbol(classNode);
+      return new exports.StrongSymbol(classNode);
     }
   } else {
     ident = fullIdentRegex.exec(identifier);
@@ -57,7 +57,7 @@ exports.lookupSymbol = function(tree, identifier, strongonly) {
       throw new Error("Invalid property in identifier " + identifier);
     }
     
-    return new StrongSymbol(classNode, propNode);
+    return new exports.StrongSymbol(classNode, propNode);
   }
   
   throw new Error("Invalid symbol");
