@@ -177,7 +177,7 @@ function emitClassIdentity(cnode, sb, level) {
     
     if (cnodeIdent instanceof require('../parser/symbol_locator').StrongSymbol) {
       var propNode = cnodeIdent.prop;
-      if (propNode && propNode.obsolete) {
+      if ('obsolete' in propNode) {
         supressObsoletionWarning = true;
       }
     }
