@@ -35,18 +35,16 @@ exports.tokenizeString = function(buffer) {
 
   var tokenList = [];
   while ((match = regexPattern.exec(buffer))) {
-    var i = 0;
-    match.forEach(function(group) {
-      if (group && i > 1) {
+    for (var i = 0; i < match.length; i++) {
+      if (match[i] && i > 1) {
         var groupName = groupNames[i];
         
         if (groupName == 'comment')
-          return; // don't create tokens for comments
+          continue; // don't create tokens for comments
         
-        tokenList.push(new exports.Token(groupName, group));
+        tokenList.push(new exports.Token(groupName, match[i]));
       }
-      i++;
-    });
+    }
   }
   
   return tokenList;

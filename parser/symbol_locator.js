@@ -14,7 +14,11 @@ var identifierRegex = new RegExp(identifierPattern);
 var fullIdentRegex = new RegExp(fullIdentPattern);
 
 function findNode(tree, symbol) {
-  return tree.childNodes.filter(function(child) { return child.name == symbol; })[0];
+  for (var i = 0; i < tree.childNodes.length; i++) {
+    if (tree.childNodes[i].name == symbol) {
+      return tree.childNodes[i];
+    }
+  }
 }
 
 exports.lookupSymbol = function(tree, identifier, strongonly) {

@@ -1,3 +1,6 @@
+var symbol_locator = require('./parser/symbol_locator');
+var token_analyzer = require('./parser/token_analyzer');
+
 function TypeInfo(size, unsigned) {
   this.size = size;
   this.signed = !unsigned;
@@ -38,7 +41,7 @@ exports.getTypeSize = function(prop) {
     return 0;
   }
   
-  if (sym instanceof require('./parser/symbol_locator').WeakSymbol) {
+  if (sym instanceof symbol_locator.WeakSymbol) {
     var key = sym.identifier;
     
     if (!weakTypeMap[key]) {
@@ -50,11 +53,11 @@ exports.getTypeSize = function(prop) {
     }
     
     return weakTypeMap[key].size;
-  } else if (sym instanceof require('./parser/symbol_locator').StrongSymbol) {
-    if (sym.class instanceof require('./parser/token_analyzer').EnumNode) {
+  } else if (sym instanceof symbol_locator.StrongSymbol) {
+    if (sym.class instanceof token_analyzer.EnumNode) {
       var enode = sym.class;
       
-      if (enode.type instanceof require('./parser/symbol_locator').WeakSymbol)
+      if (enode.type instanceof symbol_locator.WeakSymbol)
         return weakTypeMap[enode.type.identifier].size;
       else
         return weakTypeMap[defaultType].size;

@@ -1,3 +1,8 @@
+var code_generator = require('../code_generator');
+var symbol_locator = require('../parser/symbol_locator');
+var token_analyzer = require('../parser/token_analyzer');
+var util = require('util');
+
 var readerTypeMap = {
   byte: 'Byte',
   short: 'Int16',
@@ -21,7 +26,7 @@ exports.emitNamespace = function(sb, end, nspace) {
     sb.push('using System.IO;');
     sb.push('using System.Runtime.InteropServices;');
     sb.push('');
-    sb.push(require('util').format('namespace %s', nspace));
+    sb.push(util.format('namespace %s', nspace));
     sb.push('{');
   }
 };
@@ -61,9 +66,9 @@ exports.emitSerialBase = function(sb, level, supportsGC) {
 };
 
 exports.emitType = function(sym) {
-  if (sym instanceof require('../parser/symbol_locator').WeakSymbol) {
+  if (sym instanceof symbol_locator.WeakSymbol) {
     return sym.identifier;
-  } else if (sym instanceof require('../parser/symbol_locator').StrongSymbol) {
+  } else if (sym instanceof symbol_locator.StrongSymbol) {
     if (!sym.prop) {
       return sym.class.name;
     } else {
@@ -84,12 +89,12 @@ exports.getUpperName = function(name) {
 };
 
 exports.emitNode = function(n, sb, level) {
-  if (n instanceof require('../parser/token_analyzer').ClassNode) {
+  if (n instanceof token_analyzer.ClassNode) {
     emitClassNode(n, sb, level);
-  } else if (n instanceof require('../parser/token_analyzer').EnumNode) {
+  } else if (n instanceof token_analyzer.EnumNode) {
     emitEnumNode(n, sb, level);
   }
-}
+};
 
 function emitEnumNode(enode, sb, level) {
   var padding = Array(level + 1).join('\t');
@@ -175,7 +180,7 @@ function emitClassIdentity(cnode, sb, level) {
     var cnodeIdent = cnode.ident;
     var supressObsoletionWarning = false;
     
-    if (cnodeIdent instanceof require('../parser/symbol_locator').StrongSymbol) {
+    if (cnodeIdent instanceof symbol_locator.StrongSymbol) {
       var propNode = cnodeIdent.prop;
       if ('obsolete' in propNode) {
         supressObsoletionWarning = true;
@@ -231,19 +236,19 @@ function emitClassProperties(cnode, sb, level) {
       return;
     }
     
-    var size = require('../code_generator').getTypeSize(prop);
+    var size = code_generator.getTypeSize(prop);
     baseClassSize += size;
     
     sb.push(padding + '// Static size: ' + size);
     
     if (prop.flags == 'steamidmarshal' && typestr == 'ulong') {
-      sb.push(padding + require('util').format('private %s %s;', typestr, prop.name));
+      sb.push(padding + util.format('private %s %s;', typestr, prop.name));
       sb.push(padding + 'public SteamID ' + propName + ' { get { return new SteamID( ' + prop.name + ' ); } set { ' + prop.name + ' = value.ConvertToUInt64(); } }');
     } else if (prop.flags == 'boolmarshal' && typestr == 'byte') {
-      sb.push(padding + require('util').format('private %s %s;', typestr, prop.name));
+      sb.push(padding + util.format('private %s %s;', typestr, prop.name));
       sb.push(padding + 'public bool ' + propName + ' { get { return ( ' + prop.name + ' == 1 ); } set { ' + prop.name + ' = ( byte )( value ? 1 : 0 ); } }');
     } else if (prop.flags == 'gameidmarshal' && typestr == 'ulong') {
-      sb.push(padding + require('util').format('private %s %s;', typestr, prop.name));
+      sb.push(padding + util.format('private %s %s;', typestr, prop.name));
       sb.push(padding + 'public GameID ' + propName + ' { get { return new GameID( ' + prop.name + ' ); } set { ' + prop.name + ' = value.ToUInt64(); } }');
     } else {
       if (prop.flagsOpt && isFinite(prop.flagsOpt)) {
@@ -281,7 +286,7 @@ function emitClassConstructor(cnode, sb, level) {
       ctor = 'new ' + exports.emitType(prop.type) + '()';
     } else if (!defsym) {
       if (prop.flagsOpt) {
-        ctor = 'new ' + exports.emitType(prop.type) + '[' + require('../code_generator').getTypeSize(prop) + ']';
+        ctor = 'new ' + exports.emitType(prop.type) + '[' + code_generator.getTypeSize(prop) + ']';
       } else {
         ctor = '0';
       }
@@ -322,7 +327,7 @@ function emitClassSerializer(cnode, sb, level, baseSize) {
   
   cnode.childNodes.forEach(function(prop) {
     var typestr = exports.emitType(prop.type);
-    var size = require('../code_generator').getTypeSize(prop);
+    var size = code_generator.getTypeSize(prop);
     
     if (size == 0) {
       if (prop.flags == 'proto') {
@@ -364,10 +369,10 @@ function emitClassSerializer(cnode, sb, level, baseSize) {
     var typecast = '';
     var propName = exports.getUpperName(prop.name);
     
-    if (prop.type.class instanceof require('../parser/token_analyzer').EnumNode) {
+    if (prop.type.class instanceof token_analyzer.EnumNode) {
       var enode = prop.type.class;
       
-      if (enode.type instanceof require('../parser/symbol_locator').WeakSymbol)
+      if (enode.type instanceof symbol_locator.WeakSymbol)
         typecast = '(' + enode.type.identifier + ')';
       else
         typecast = '(int)';
@@ -425,7 +430,7 @@ function emitClassDeserializer(cnode, sb, level, baseSize) {
   
   cnode.childNodes.forEach(function(prop) {
     var typestr = exports.emitType(prop.type);
-    var size = require('../code_generator').getTypeSize(prop);
+    var size = code_generator.getTypeSize(prop);
     
     var defflags = prop.flags;
     var symname = exports.getUpperName(prop.name);
@@ -451,7 +456,7 @@ function emitClassDeserializer(cnode, sb, level, baseSize) {
       var typecast = '';
       if (!readerTypeMap[typestr]) {
         typecast = '(' + typestr + ')';
-        typestr = require('../code_generator').getTypeOfSize(size, exports.supportsUnsignedTypes());
+        typestr = code_generator.getTypeOfSize(size, exports.supportsUnsignedTypes());
       }
       
       var call = 'br.Read' + readerTypeMap[typestr] + '()';
