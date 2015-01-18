@@ -49,25 +49,25 @@ exports.analyze = function(tokens) {
               var ident = null, parent = null;
               
               op1 = optional(tokens, 'operator', '<');
-              if (op1 != null) {
+              if (op1) {
                 ident = expect(tokens, 'identifier');
                 op2 = expect(tokens, 'operator', '>');
               }
               
               var expects = optional(tokens, 'identifier', 'expects');
-              if (expects != null) {
+              if (expects) {
                 parent = expect(tokens, 'identifier');
               }
               
               var cnode = new exports.ClassNode();
               cnode.name = name.value;
               
-              if (ident != null) {
+              if (ident) {
                 cnode.ident = lookupSymbol(root, ident.value, false);
               }
               
-              if (parent != null) {
-                //cnode.parent = lookupSymbol(root, parent.Value, true);
+              if (parent) {
+                //cnode.parent = lookupSymbol(root, parent.value, true);
               }
               
               root.childNodes.push(cnode);
@@ -121,7 +121,7 @@ function parseInnerScope(tokens, parent, root) {
     var t1 = tokens.shift();
     
     var t1op1 = optional(tokens, 'operator', '<');
-    var flagop;
+    var flagop = null;
     
     if (t1op1) {
       flagop = expect(tokens, 'identifier');

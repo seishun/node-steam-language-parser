@@ -115,7 +115,7 @@ function emitEnumNode(enode, sb, level) {
   enode.childNodes.forEach(function(prop) {
     lastValue = exports.emitMultipleTypes(prop.default);
     
-    if ('obsolete' in prop) {
+    if (prop.obsolete != null) {
       if (prop.obsolete.length > 0)
         sb.push(padding + '\t[Obsolete( "' + prop.obsolete + '" )]');
       else
@@ -182,7 +182,7 @@ function emitClassIdentity(cnode, sb, level) {
     
     if (cnodeIdent instanceof symbol_locator.StrongSymbol) {
       var propNode = cnodeIdent.prop;
-      if ('obsolete' in propNode) {
+      if (propNode instanceof token_analyzer.PropNode && propNode.obsolete != null) {
         supressObsoletionWarning = true;
       }
     }
@@ -204,7 +204,7 @@ function emitClassIdentity(cnode, sb, level) {
     sb.push('');
   } else if (~cnode.name.indexOf('Hdr')) {
     if (~cnode.name.indexOf('MsgGC')) {
-      if (cnode.childNodes.filter(function(node) { return node.name == 'msg' })[0]) {
+      if (cnode.childNodes.some(function(node) { return node.name == 'msg'; })) {
         sb.push(padding + 'public void SetEMsg( uint msg ) { this.Msg = msg; }');
         sb.push('');
       } else {
@@ -329,9 +329,9 @@ function emitClassSerializer(cnode, sb, level, baseSize) {
     var typestr = exports.emitType(prop.type);
     var size = code_generator.getTypeSize(prop);
     
-    if (size == 0) {
+    if (!size) {
       if (prop.flags == 'proto') {
-        if (baseSize == 0) {
+        if (!baseSize) {
           // early exit
           sb.push(padding + '\tProtoBuf.Serializer.Serialize<' + typestr + '>(stream, ' + exports.getUpperName(prop.name) + ');');
           sb.push(padding + '}');
@@ -341,7 +341,7 @@ function emitClassSerializer(cnode, sb, level, baseSize) {
         sb.push(padding + '\tMemoryStream ms' + exports.getUpperName(prop.name) + ' = new MemoryStream();');
         sb.push(padding + '\tProtoBuf.Serializer.Serialize<' + typestr + '>(ms' + exports.getUpperName(prop.name) + ', ' + exports.getUpperName(prop.name) + ');');
         
-        if (prop.flagsOpt) {
+        if (prop.flagsOpt != null) {
           sb.push(padding + '\t' + exports.getUpperName(prop.flagsOpt) + ' = (int)ms' + exports.getUpperName(prop.name) + '.Length;');
         }
         
@@ -441,9 +441,9 @@ function emitClassDeserializer(cnode, sb, level, baseSize) {
       return;
     }
     
-    if (size == 0) {
+    if (!size) {
       if (prop.flags == 'proto') {
-        if (prop.flagsOpt) {
+        if (prop.flagsOpt != null) {
           sb.push(padding + '\tusing( MemoryStream ms' + exports.getUpperName(prop.name) + ' = new MemoryStream( br.ReadBytes( ' + exports.getUpperName(prop.flagsOpt) + ' ) ) )');
           sb.push(padding + '\t\t' + exports.getUpperName(prop.name) + ' = ProtoBuf.Serializer.Deserialize<' + typestr + '>( ms' + exports.getUpperName(prop.name) + ' );');
         } else {
